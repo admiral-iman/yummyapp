@@ -8,9 +8,12 @@ environment:
 dependencies: 
   cupertino_icons: ^1.0.2
   image_picker: ^0.8.4+4
+  curved_navigation_bar: ^1.0.6
+  circular_profile_avatar: ^2.0.5
   get: 4.6.6
   flutter: 
     sdk: flutter
+  flutter_svg: ^1.1.1
 
 dev_dependencies: 
   flutter_lints: ^2.0.0

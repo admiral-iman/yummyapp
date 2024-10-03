@@ -1,14 +1,14 @@
+// ignore_for_file: use_key_in_widget_constructors
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import 'app/modules/home/controllers/recipe_controller.dart';
+import 'app/modules/home/controllers/profile_controller.dart';
+import 'app/modules/home/views/create_profile_page.dart';
 import 'app/modules/home/views/home_page.dart';
-import 'app/modules/home/views/menu_recipe.dart';
+import 'app/modules/home/views/account_page.dart';
 import 'app/modules/home/views/onboarding_page.dart';
-import 'app/modules/home/views/upload_recipe_page.dart';
 
 void main() {
-  Get.put(RecipeController());
+  Get.put(ProfileController()); // Memastikan RecipeController terinisialisasi
   runApp(YummyApp());
 }
 
@@ -17,13 +17,15 @@ class YummyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Yummy Recipes',
+      title: 'Yummy App',
       initialRoute: '/onboarding',
       getPages: [
         GetPage(name: '/onboarding', page: () => OnboardingPage()),
-        GetPage(name: '/home', page: () => HomePage()),
-        GetPage(name: '/menu-recipe', page: () => MenuRecipePage()),
-        GetPage(name: '/upload-recipe', page: () => UploadRecipePage()),
+        GetPage(
+            name: '/upload-profile',
+            page: () => CreateProfilePage()), // Update nama route
+        GetPage(name: '/home', page: () => HomeView()),
+        GetPage(name: '/account', page: () => AccountPage()),
       ],
     );
   }

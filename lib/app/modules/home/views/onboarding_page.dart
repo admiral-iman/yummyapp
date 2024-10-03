@@ -6,29 +6,27 @@ class OnboardingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        // Menggunakan BoxDecoration untuk menambahkan gambar sebagai latar belakang
         child: Stack(
           children: [
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/yummybg.png'),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
-            // Overlay semi-transparan
-
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(height: 600),
+                  const SizedBox(height: 600),
                   ElevatedButton(
                     onPressed: () {
-                      Get.offNamed('/home');
+                      Get.offNamed(
+                          '/upload-profile'); // Menuju ke halaman upload profile
                     },
-                    child: Text('Get Started'),
+                    child: const Text('Get Started'),
                   ),
                 ],
               ),
