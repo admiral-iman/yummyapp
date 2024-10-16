@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../controllers/profile_controller.dart';
-import '../models/profile_model.dart'; // Import model Recipe
+import '../../../data/models/profile_model.dart'; // Import model Recipe
 
 class CreateProfilePage extends StatefulWidget {
   @override
@@ -98,10 +98,8 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               TextField(
                 controller: birthDateController,
                 decoration: InputDecoration(labelText: 'Birth Date'),
-                readOnly:
-                    true, // Tidak bisa mengetik, hanya bisa memilih tanggal
-                onTap: () =>
-                    _selectDate(context), // Pilih tanggal ketika di-tap
+                readOnly: true,
+                onTap: () => _selectDate(context),
               ),
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(labelText: 'Gender'),

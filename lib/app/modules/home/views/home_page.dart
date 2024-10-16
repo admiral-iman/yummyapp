@@ -1,8 +1,9 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:demo_yummy/app/modules/home/views/account_page.dart';
+import 'package:demo_yummy/app/modules/profile/views/account_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
+import '../../profile/controllers/profile_controller.dart'; // Import ProfileController
 import 'food_cart_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -11,6 +12,8 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    final ProfileController profileController =
+        Get.find<ProfileController>(); // Dapatkan ProfileController
     final items = <Widget>[
       SvgPicture.asset('assets/home.svg', width: 40, height: 40),
       SvgPicture.asset('assets/search.svg', width: 40, height: 40),
@@ -31,7 +34,6 @@ class HomeView extends GetView<HomeController> {
         title: Text("Food Recipes"), // Add a title for clarity
       ),
       body: SingleChildScrollView(
-        // Tambahkan SingleChildScrollView
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(15),
@@ -70,13 +72,27 @@ class HomeView extends GetView<HomeController> {
                           ],
                         ),
                         SizedBox(height: 5),
-                        Text(
-                          "Cristiano Ronaldo",
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        // Gunakan Obx untuk memantau perubahan pada profil
+                        Obx(() {
+                          if (profileController.profiles.isNotEmpty) {
+                            return Text(
+                              profileController.profiles[0]
+                                  .nama, // Tampilkan nama profil pertama
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          } else {
+                            return Text(
+                              "No Profile", // Jika tidak ada profil
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          }
+                        }),
                         SizedBox(height: 25),
                         Text(
                           "Recipes",

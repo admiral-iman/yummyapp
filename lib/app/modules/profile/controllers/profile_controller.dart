@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import '../models/profile_model.dart';
+import '../../../data/models/profile_model.dart';
 
 class ProfileController extends GetxController {
   var profiles = <Profile>[].obs;

@@ -1,8 +1,7 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/profile_controller.dart'; // Pastikan ini adalah path yang benar
-// Pastikan untuk mengimpor widget CircularProfileAvatar
+import '../controllers/profile_controller.dart';
 
 class AccountPage extends StatelessWidget {
   final ProfileController profileController = Get.put(ProfileController());
