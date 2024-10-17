@@ -1,0 +1,40 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:get/get.dart';
+
+import '../models/recipe.dart'; // Adjust this model based on Spoonacular API response
+
+class SpoonacularController extends GetxController {
+  static const String _baseUrl = 'https://api.spoonacular.com/';
+  static const String _apiKey = 'YOUR_API'; // Replace with your Spoonacular API Key
+  static const String _endpoint = 'recipes/{id}/information
+'; // Adjust based on the Spoonacular endpoint you're using
+  
+  RxList<Recipe> recipes = RxList<Recipe>([]);
+  RxBool isLoading = false.obs;
+
+  @override
+  void onInit() async {
+    await fetchRecipes();
+    super.onInit();
+  }
+
+  Future<void> fetchRecipes() async {
+    try {
+      isLoading.value = true;
+      final response = await http.get(Uri.parse('${_baseUrl}$_endpoint?apiKey=$_apiKey'));
+
+      if (response.statusCode == 200) {
+        final jsonData = response.body;
+        final recipesResult = Recipes.fromJson(json.decode(jsonData));
+        recipes.value = recipesResult.recipes; // Adjust based on your model
+      } else {
+        print('Request failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('An error occurred: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}

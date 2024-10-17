@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class FoodCard extends StatelessWidget {
   final String title;
-  final String imagePath;
+  final String imagePath; // URL gambar
   final String author;
   final String profileImagePath;
   final bool showProfileImage;
@@ -32,7 +32,10 @@ class FoodCard extends StatelessWidget {
                 height: 120,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage(imagePath),
+                    image: imagePath.isNotEmpty
+                        ? NetworkImage(imagePath) // Menggunakan NetworkImage
+                        : AssetImage('assets/default_image.png')
+                            as ImageProvider, // Gambar default
                     fit: BoxFit.cover,
                   ),
                 ),
