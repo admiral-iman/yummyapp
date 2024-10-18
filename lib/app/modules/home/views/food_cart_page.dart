@@ -3,16 +3,10 @@ import 'package:flutter/material.dart';
 class FoodCard extends StatelessWidget {
   final String title;
   final String imagePath; // URL gambar
-  final String author;
-  final String profileImagePath;
-  final bool showProfileImage;
 
   FoodCard({
     required this.title,
     required this.imagePath,
-    required this.author,
-    required this.profileImagePath,
-    this.showProfileImage = true,
   });
 
   @override
@@ -52,26 +46,6 @@ class FoodCard extends StatelessWidget {
                         fontSize: 16.0,
                       ),
                     ),
-                    SizedBox(height: 8.0),
-                    if (showProfileImage)
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 12.0,
-                            backgroundImage: AssetImage(profileImagePath),
-                          ),
-                          SizedBox(width: 8.0),
-                          Text(
-                            author,
-                            style: TextStyle(fontSize: 12.0),
-                          ),
-                        ],
-                      )
-                    else
-                      Text(
-                        author,
-                        style: TextStyle(fontSize: 12.0),
-                      ),
                   ],
                 ),
               ),

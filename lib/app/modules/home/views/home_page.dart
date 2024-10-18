@@ -3,12 +3,12 @@ import 'package:demo_yummy/app/modules/home/views/food_cart_page.dart';
 import 'package:demo_yummy/app/modules/profile/views/account_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../webview/views/recipe_webview.dart';
 import '../controllers/home_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:demo_yummy/app/data/services/api_services.dart';
 import 'package:demo_yummy/app/data/models/recipe_model.dart';
+import 'package:demo_yummy/app/modules/webview/views/recipe_webview.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
@@ -44,10 +44,10 @@ class HomeView extends GetView<HomeController> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: true,
-        title: Text("Food Recipes"), // Title for clarity
+        title: Text("Food Recipes"),
       ),
       body: FutureBuilder<List<Recipe>>(
-        future: fetchRecipes(), // Call method to fetch recipes
+        future: fetchRecipes(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -93,12 +93,10 @@ class HomeView extends GetView<HomeController> {
                                 ],
                               ),
                               SizedBox(height: 5),
-                              // Using Obx to monitor profile changes
                               Obx(() {
                                 if (profileController.profiles.isNotEmpty) {
                                   return Text(
-                                    profileController.profiles[0]
-                                        .nama, // Show the first profile's name
+                                    profileController.profiles[0].nama,
                                     style: TextStyle(
                                       fontSize: 30,
                                       fontWeight: FontWeight.bold,
@@ -106,7 +104,7 @@ class HomeView extends GetView<HomeController> {
                                   );
                                 } else {
                                   return Text(
-                                    "No Profile", // If no profile
+                                    "No Profile",
                                     style: TextStyle(
                                       fontSize: 30,
                                       fontWeight: FontWeight.bold,
@@ -126,40 +124,35 @@ class HomeView extends GetView<HomeController> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 15), // Spacing after header
-                      // GridView for displaying FoodCard
+                      SizedBox(height: 15),
                       GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           childAspectRatio: 0.8,
                         ),
                         itemCount: snapshot.data!.length,
-                        shrinkWrap: true, // Allows GridView to adjust
-                        physics:
-                            NeverScrollableScrollPhysics(), // Non-scrollable
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
                         itemBuilder: (context, index) {
                           final recipe = snapshot.data![index];
                           return GestureDetector(
                             onTap: () {
                               if (recipe.spoonacularSourceUrl != null) {
-                                Get.to(
-                                  RecipeWebView(
-                                    url: recipe.spoonacularSourceUrl!,
-                                  ),
-                                ); // Navigate to RecipeWebView with URL
+                                print(
+                                    'Navigating to URL: ${recipe.spoonacularSourceUrl}');
+                                Get.toNamed('/recipe-webview',
+                                    arguments: recipe.spoonacularSourceUrl);
                               } else {
+                                print(
+                                    'No URL found for recipe: ${recipe.title}');
                                 Get.snackbar('Error',
                                     'No URL available for this recipe');
                               }
                             },
                             child: FoodCard(
                               title: recipe.title ?? 'No Title',
-                              imagePath: recipe.imageUrl ??
-                                  'assets/default_image.png', // Default image if none
-                              author:
-                                  'Author Name', // You can add author information if needed
-                              profileImagePath:
-                                  "assets/profile1.jpg", // Add author's profile image if needed
+                              imagePath:
+                                  recipe.imageUrl ?? 'assets/default_image.png',
                             ),
                           );
                         },
@@ -179,34 +172,28 @@ class HomeView extends GetView<HomeController> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1), // Shadow color
+              color: Colors.black.withOpacity(0.1),
               spreadRadius: 3,
               blurRadius: 50,
-              offset: Offset(0, 10), // Shadow position
+              offset: Offset(0, 10),
             ),
           ],
         ),
         child: CurvedNavigationBar(
           items: items,
           buttonBackgroundColor: Color(0xFF042628),
-          backgroundColor: Colors.transparent, // Transparent background
+          backgroundColor: Colors.transparent,
         ),
       ),
     );
   }
 
   Future<List<Recipe>> fetchRecipes() async {
-    List<Recipe> recipes = [];
-    // Replace with your desired recipe IDs
-    for (String id in ['1', '2', '3', '4']) {
-      try {
-        Recipe recipe = await ApiService.instance.fetchRecipe(id);
-        recipes.add(recipe);
-      } catch (e) {
-        print(
-            'Error fetching recipe with id $id: $e'); // Log error for debugging
-      }
+    try {
+      return await ApiService.instance.fetchAllRecipes();
+    } catch (e) {
+      print('Error fetching recipes: $e');
+      return [];
     }
-    return recipes;
   }
 }
