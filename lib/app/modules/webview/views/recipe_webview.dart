@@ -13,7 +13,7 @@ class RecipeWebView extends StatelessWidget {
         title: Text("Recipe Details"),
       ),
       body: WebView(
-        initialUrl: url, // Memuat URL resep
+        initialUrl: 'https://spoonacular.com/', // Memuat URL resep
         javascriptMode: JavascriptMode.unrestricted, // Mengizinkan Javascript
       ),
     );

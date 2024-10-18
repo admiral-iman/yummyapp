@@ -1,6 +1,7 @@
 // ignore_for_file: use_key_in_widget_constructors
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:webview_flutter/webview_flutter.dart'; // Import WebView
 import 'app/modules/profile/controllers/profile_controller.dart';
 import 'app/modules/profile/views/create_profile_page.dart';
 import 'app/modules/home/views/home_page.dart';
@@ -8,6 +9,12 @@ import 'app/modules/profile/views/account_page.dart';
 import 'app/modules/onboarding/onboarding_page.dart';
 
 void main() {
+  // Initialize WebView for Android
+  WidgetsFlutterBinding.ensureInitialized();
+  if (WebView.platform == null) {
+    WebView.platform = SurfaceAndroidWebView(); // Use SurfaceAndroidWebView
+  }
+
   Get.put(ProfileController()); // Memastikan RecipeController terinisialisasi
   runApp(YummyApp());
 }

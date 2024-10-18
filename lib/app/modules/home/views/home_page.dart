@@ -3,13 +3,12 @@ import 'package:demo_yummy/app/modules/home/views/food_cart_page.dart';
 import 'package:demo_yummy/app/modules/profile/views/account_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../webview/views/recipe_webview.dart';
 import '../controllers/home_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
-import 'package:demo_yummy/app/modules/recipe_screen.dart'; // Import RecipeScreen
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:demo_yummy/app/data/services/api_services.dart';
 import 'package:demo_yummy/app/data/models/recipe_model.dart';
-import 'package:demo_yummy/app/modules/recipe_screen.dart'; // Import RecipeScreen
 
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
@@ -22,7 +21,16 @@ class HomeView extends GetView<HomeController> {
     final items = <Widget>[
       SvgPicture.asset('assets/home.svg', width: 40, height: 40),
       SvgPicture.asset('assets/search.svg', width: 40, height: 40),
-      SvgPicture.asset('assets/Chef.svg', width: 40, height: 40),
+      GestureDetector(
+        onTap: () {
+          // Navigasi ke halaman WebView atau halaman resep
+          Get.to(() => RecipeWebView(
+                url:
+                    'https://www.spoonacular.com', // Ganti dengan URL resep dari API
+              ));
+        },
+        child: SvgPicture.asset('assets/Chef.svg', width: 40, height: 40),
+      ),
       SvgPicture.asset('assets/notification.svg', width: 40, height: 40),
       GestureDetector(
         onTap: () {
