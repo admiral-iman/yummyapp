@@ -1,4 +1,4 @@
-import 'package:demo_yummy/app/modules/recipe/views/recipe.dart';
+import 'package:demo_yummy/app/modules/notification/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,14 +10,18 @@ import 'app/modules/profile/views/account_page.dart';
 import 'app/modules/onboarding/onboarding_page.dart';
 
 void main() async {
-  // Initialize WebView for Android
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Initialize NotificationService
+  await NotificationService.instance.initialize();
+
+  // Initialize WebView for Android
   if (WebView.platform == null) {
-    WebView.platform = SurfaceAndroidWebView(); // Use SurfaceAndroidWebView
+    WebView.platform = SurfaceAndroidWebView();
   }
 
-  Get.put(ProfileController()); // Memastikan RecipeController terinisialisasi
+  Get.put(ProfileController());
   runApp(YummyApp());
 }
 
