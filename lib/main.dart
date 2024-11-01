@@ -1,16 +1,18 @@
-// ignore_for_file: use_key_in_widget_constructors
+import 'package:demo_yummy/app/modules/recipe/views/recipe.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:webview_flutter/webview_flutter.dart'; // Import WebView
+import 'package:webview_flutter/webview_flutter.dart';
 import 'app/modules/profile/controllers/profile_controller.dart';
 import 'app/modules/profile/views/create_profile_page.dart';
 import 'app/modules/home/views/home_page.dart';
 import 'app/modules/profile/views/account_page.dart';
 import 'app/modules/onboarding/onboarding_page.dart';
 
-void main() {
+void main() async {
   // Initialize WebView for Android
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   if (WebView.platform == null) {
     WebView.platform = SurfaceAndroidWebView(); // Use SurfaceAndroidWebView
   }

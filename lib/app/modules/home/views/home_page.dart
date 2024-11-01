@@ -1,6 +1,7 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:demo_yummy/app/modules/home/views/food_cart_page.dart';
 import 'package:demo_yummy/app/modules/profile/views/account_page.dart';
+import 'package:demo_yummy/app/modules/recipe/views/recipe.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
@@ -20,7 +21,12 @@ class HomeView extends GetView<HomeController> {
 
     final items = <Widget>[
       SvgPicture.asset('assets/home.svg', width: 40, height: 40),
-      SvgPicture.asset('assets/search.svg', width: 40, height: 40),
+      GestureDetector(
+        onTap: () {
+          Get.to(RecipePage()); // Navigate to AccountPage
+        },
+        child: SvgPicture.asset('assets/search.svg', width: 40, height: 40),
+      ),
       GestureDetector(
         onTap: () {
           // Navigasi ke halaman WebView atau halaman resep
