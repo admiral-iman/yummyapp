@@ -4,15 +4,25 @@ import 'dart:io';
 class Profile {
   String nama;
   String email;
-  String birthDate; // Tambahkan ini
-  String gender; // Tambahkan ini
+  String birthDate;
+  String gender;
   final File imagePath;
 
   Profile({
     required this.nama,
     required this.email,
-    required this.birthDate, // Tambahkan ini
-    required this.gender, // Tambahkan ini
+    required this.birthDate,
+    required this.gender,
     required this.imagePath,
   });
+
+  factory Profile.fromFirestore(Map<String, dynamic> data) {
+    return Profile(
+      nama: data['name'] ?? '',
+      email: data['email'] ?? '',
+      birthDate: data['birthDate'] ?? '',
+      gender: data['gender'] ?? '',
+      imagePath: File(data['imagePath'] ?? ''),
+    );
+  }
 }

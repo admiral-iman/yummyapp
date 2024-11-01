@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../controllers/profile_controller.dart';
-import '../../../data/models/profile_model.dart'; // Import model Recipe
+import '../../../data/models/profile_model.dart';
 
 class CreateProfilePage extends StatefulWidget {
   @override
@@ -16,6 +16,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final birthDateController = TextEditingController();
+  final passwordController = TextEditingController();
   String? selectedGender;
 
   late ProfileController profileController;
@@ -35,7 +36,6 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     });
   }
 
-  // Widget untuk memilih tanggal
   Future<void> _selectDate(BuildContext context) async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -51,25 +51,55 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     }
   }
 
+  Future<void> _submitProfile() async {
+    if (_image == null) {
+      Get.snackbar("Error", "Please select an image.",
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    if (nameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        birthDateController.text.isEmpty ||
+        selectedGender == null) {
+      Get.snackbar("Error", "All fields are required.",
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    Profile newProfile = Profile(
+      nama: nameController.text,
+      email: emailController.text,
+      birthDate: birthDateController.text,
+      gender: selectedGender!,
+      imagePath: _image!,
+    );
+
+    await profileController.registerUser(
+      emailController.text,
+      passwordController.text,
+      newProfile,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Create Profile')),
+      appBar: AppBar(title: Text('Register')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          // Tambahkan SingleChildScrollView agar bisa di-scroll
           child: Column(
             children: [
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
-                  height: 200, // Sesuaikan dengan tinggi yang diinginkan
-                  width: 200, // Sesuaikan dengan lebar yang diinginkan
+                  height: 200,
+                  width: 200,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300], // Warna latar belakang
-                    borderRadius: BorderRadius.circular(100), // Sudut melingkar
-                    border: Border.all(color: Colors.orange), // Garis tepi
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(color: Colors.orange),
                   ),
                   child: _image == null
                       ? Center(
@@ -96,6 +126,11 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                 decoration: InputDecoration(labelText: 'Email'),
               ),
               TextField(
+                controller: passwordController,
+                decoration: InputDecoration(labelText: 'Password'),
+                obscureText: true,
+              ),
+              TextField(
                 controller: birthDateController,
                 decoration: InputDecoration(labelText: 'Birth Date'),
                 readOnly: true,
@@ -116,36 +151,20 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   });
                 },
               ),
+              SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  // Validasi input
-                  if (_image == null) {
-                    Get.snackbar("Error", "Please select an image.",
-                        snackPosition: SnackPosition.BOTTOM);
-                    return;
-                  }
-                  if (nameController.text.isEmpty ||
-                      emailController.text.isEmpty ||
-                      birthDateController.text.isEmpty ||
-                      selectedGender == null) {
-                    Get.snackbar("Error", "All fields are required.",
-                        snackPosition: SnackPosition.BOTTOM);
-                    return;
-                  }
-
-                  Profile newProfile = Profile(
-                    nama: nameController.text,
-                    email: emailController.text,
-                    birthDate: birthDateController.text,
-                    gender: selectedGender!,
-                    imagePath: _image!,
-                  );
-
-                  profileController.addProfile(newProfile);
-
-                  Get.offNamed('/home');
-                },
+                onPressed: _submitProfile,
                 child: Text('Submit Profile'),
+              ),
+              SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Get.toNamed('/login');
+                },
+                child: Text(
+                  'Already have an account? Log in',
+                  style: TextStyle(color: Colors.blue),
+                ),
               ),
             ],
           ),

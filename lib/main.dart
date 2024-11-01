@@ -1,4 +1,5 @@
 import 'package:demo_yummy/app/modules/notification/notification_service.dart';
+import 'package:demo_yummy/app/modules/profile/views/login_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -34,11 +35,10 @@ class YummyApp extends StatelessWidget {
       initialRoute: '/onboarding',
       getPages: [
         GetPage(name: '/onboarding', page: () => OnboardingPage()),
-        GetPage(
-            name: '/upload-profile',
-            page: () => CreateProfilePage()), // Update nama route
+        GetPage(name: '/upload-profile', page: () => CreateProfilePage()),
         GetPage(name: '/home', page: () => HomeView()),
         GetPage(name: '/account', page: () => AccountPage()),
+        GetPage(name: '/login', page: () => LoginPage()),
       ],
     );
   }
