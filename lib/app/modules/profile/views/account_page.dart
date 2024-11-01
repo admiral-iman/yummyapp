@@ -20,7 +20,8 @@ class AccountPage extends StatelessWidget {
           itemBuilder: (context, index) {
             final profile = profileController.profiles[index];
             return ListTile(
-              leading: profile.imagePath != null
+              leading: profile.imagePath.path
+                      .isNotEmpty // Memastikan untuk mengambil path dari File
                   ? CircularProfileAvatar(
                       '',
                       radius: 30,
@@ -30,7 +31,7 @@ class AccountPage extends StatelessWidget {
                       elevation: 5.0,
                       child: ClipOval(
                         child: Image.file(
-                          profile.imagePath,
+                          profile.imagePath, // Mengambil gambar dari File
                           fit: BoxFit.cover,
                           width: 500,
                           height: 500,
@@ -62,6 +63,16 @@ class AccountPage extends StatelessWidget {
           },
         );
       }),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Logika untuk logout, misalnya menghapus sesi pengguna
+          // Kemudian navigasi ke halaman login
+          Get.offNamed(
+              '/login'); // Pastikan rute '/login' sudah ada di aplikasi Anda
+        },
+        child: Icon(Icons.logout),
+        tooltip: 'Logout',
+      ),
     );
   }
 }

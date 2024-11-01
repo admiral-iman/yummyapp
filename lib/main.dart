@@ -1,3 +1,4 @@
+import 'package:demo_yummy/app/modules/profile/views/login_page.dart';
 import 'package:demo_yummy/app/modules/recipe/views/recipe.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -10,14 +11,13 @@ import 'app/modules/profile/views/account_page.dart';
 import 'app/modules/onboarding/onboarding_page.dart';
 
 void main() async {
-  // Initialize WebView for Android
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   if (WebView.platform == null) {
-    WebView.platform = SurfaceAndroidWebView(); // Use SurfaceAndroidWebView
+    WebView.platform = SurfaceAndroidWebView();
   }
 
-  Get.put(ProfileController()); // Memastikan RecipeController terinisialisasi
+  Get.put(ProfileController());
   runApp(YummyApp());
 }
 
@@ -30,11 +30,10 @@ class YummyApp extends StatelessWidget {
       initialRoute: '/onboarding',
       getPages: [
         GetPage(name: '/onboarding', page: () => OnboardingPage()),
-        GetPage(
-            name: '/upload-profile',
-            page: () => CreateProfilePage()), // Update nama route
+        GetPage(name: '/upload-profile', page: () => CreateProfilePage()),
         GetPage(name: '/home', page: () => HomeView()),
         GetPage(name: '/account', page: () => AccountPage()),
+        GetPage(name: '/login', page: () => LoginPage()),
       ],
     );
   }

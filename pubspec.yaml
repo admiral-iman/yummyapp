@@ -19,6 +19,7 @@ dependencies:
   flutter_local_notifications: ^15.1.0+1
   cloud_firestore: ^4.15.8
   firebase_storage: ^11.2.2
+  google_sign_in: ^6.2.1
 
   intl: ^0.18.1 
 
@@ -40,5 +41,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/google.png
 
 

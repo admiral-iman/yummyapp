@@ -16,23 +16,20 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    final ProfileController profileController =
-        Get.find<ProfileController>(); // Get ProfileController
+    final ProfileController profileController = Get.find<ProfileController>();
 
     final items = <Widget>[
       SvgPicture.asset('assets/home.svg', width: 40, height: 40),
       GestureDetector(
         onTap: () {
-          Get.to(RecipePage()); // Navigate to AccountPage
+          Get.to(RecipePage());
         },
         child: SvgPicture.asset('assets/search.svg', width: 40, height: 40),
       ),
       GestureDetector(
         onTap: () {
-          // Navigasi ke halaman WebView atau halaman resep
           Get.to(() => RecipeWebView(
-                url:
-                    'https://www.spoonacular.com', // Ganti dengan URL resep dari API
+                url: 'https://www.spoonacular.com',
               ));
         },
         child: SvgPicture.asset('assets/Chef.svg', width: 40, height: 40),
@@ -40,7 +37,7 @@ class HomeView extends GetView<HomeController> {
       SvgPicture.asset('assets/notification.svg', width: 40, height: 40),
       GestureDetector(
         onTap: () {
-          Get.to(AccountPage()); // Navigate to AccountPage
+          Get.to(AccountPage());
         },
         child: SvgPicture.asset('assets/user.svg', width: 40, height: 40),
       ),
@@ -67,7 +64,6 @@ class HomeView extends GetView<HomeController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header section
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -100,23 +96,15 @@ class HomeView extends GetView<HomeController> {
                               ),
                               SizedBox(height: 5),
                               Obx(() {
-                                if (profileController.profiles.isNotEmpty) {
-                                  return Text(
-                                    profileController.profiles[0].nama,
-                                    style: TextStyle(
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  );
-                                } else {
-                                  return Text(
-                                    "No Profile",
-                                    style: TextStyle(
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  );
-                                }
+                                return Text(
+                                  profileController.profileName.value.isNotEmpty
+                                      ? profileController.profileName.value
+                                      : "No Profile",
+                                  style: TextStyle(
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                );
                               }),
                               SizedBox(height: 25),
                               Text(
@@ -144,13 +132,9 @@ class HomeView extends GetView<HomeController> {
                           return GestureDetector(
                             onTap: () {
                               if (recipe.spoonacularSourceUrl != null) {
-                                print(
-                                    'Navigating to URL: ${recipe.spoonacularSourceUrl}');
                                 Get.toNamed('/recipe-webview',
                                     arguments: recipe.spoonacularSourceUrl);
                               } else {
-                                print(
-                                    'No URL found for recipe: ${recipe.title}');
                                 Get.snackbar('Error',
                                     'No URL available for this recipe');
                               }
