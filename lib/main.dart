@@ -1,3 +1,4 @@
+import 'package:demo_yummy/app/modules/home/controllers/home_controller.dart';
 import 'package:demo_yummy/app/modules/notification/notification_service.dart';
 import 'package:demo_yummy/app/modules/profile/views/login_page.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -11,6 +12,7 @@ import 'app/modules/profile/views/account_page.dart';
 import 'app/modules/onboarding/onboarding_page.dart';
 
 void main() async {
+  Get.put(HomeController());
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
