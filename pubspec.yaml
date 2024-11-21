@@ -11,12 +11,14 @@ dependencies:
   webview_flutter: ^3.0.4
   cupertino_icons: ^1.0.2
   image_picker: ^0.8.4+4
+  speech_to_text: ^6.6.0 
   curved_navigation_bar: ^1.0.6
   circular_profile_avatar: ^2.0.5
   firebase_core: ^2.15.1
   firebase_auth: ^4.7.3
   shared_preferences: ^2.2.0
   firebase_messaging: ^14.6.6
+  video_player: ^2.9.1 
   flutter_local_notifications: ^15.1.0+1
   cloud_firestore: ^4.15.8
   firebase_storage: ^11.2.2
