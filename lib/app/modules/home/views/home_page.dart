@@ -22,15 +22,15 @@ class HomeView extends GetView<HomeController> {
       SvgPicture.asset('assets/home.svg', width: 40, height: 40),
       GestureDetector(
         onTap: () {
-          Get.to(RecipePage());
-        },
-        child: SvgPicture.asset('assets/search.svg', width: 40, height: 40),
-      ),
-      GestureDetector(
-        onTap: () {
           Get.to(() => RecipeWebView(
                 url: 'https://www.spoonacular.com',
               ));
+        },
+        child: SvgPicture.asset('assets/web.svg', width: 40, height: 40),
+      ),
+      GestureDetector(
+        onTap: () {
+          Get.to(RecipePage());
         },
         child: SvgPicture.asset('assets/Chef.svg', width: 40, height: 40),
       ),
