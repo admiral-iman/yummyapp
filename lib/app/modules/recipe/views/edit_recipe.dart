@@ -33,9 +33,31 @@ class _EditRecipePageState extends State<EditRecipePage> {
     descriptionController.text = widget.description;
   }
 
+  // Mengubah fungsi untuk memilih gambar dari galeri atau kamera
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.getImage(source: ImageSource.gallery);
+    final pickedFile = await showDialog<XFile>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('Select Image'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final file = await picker.pickImage(source: ImageSource.camera);
+              Navigator.pop(context, file);
+            },
+            child: Text('Take Photo'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final file = await picker.pickImage(source: ImageSource.gallery);
+              Navigator.pop(context, file);
+            },
+            child: Text('Choose from Gallery'),
+          ),
+        ],
+      ),
+    );
 
     if (pickedFile != null) {
       setState(() {

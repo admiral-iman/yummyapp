@@ -15,8 +15,31 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
   File? _image;
   final picker = ImagePicker();
 
+  // Mengubah fungsi untuk memilih dari galeri atau kamera
   Future<void> _pickImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await showDialog<XFile>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('Select Image'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final file = await picker.pickImage(source: ImageSource.camera);
+              Navigator.pop(context, file);
+            },
+            child: Text('Take Photo'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final file = await picker.pickImage(source: ImageSource.gallery);
+              Navigator.pop(context, file);
+            },
+            child: Text('Choose from Gallery'),
+          ),
+        ],
+      ),
+    );
+
     setState(() {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
@@ -60,8 +83,7 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
                 onTap: _pickImage,
                 child: _image != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                            100), // Menambahkan border radius
+                        borderRadius: BorderRadius.circular(100),
                         child: Image.file(
                           _image!,
                           height: 200,
@@ -73,8 +95,7 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
                         width: 200,
                         decoration: BoxDecoration(
                           color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(
-                              100), // Menambahkan border radius
+                          borderRadius: BorderRadius.circular(100),
                         ),
                         child: Icon(Icons.camera_alt, color: Colors.grey[700]),
                       ),

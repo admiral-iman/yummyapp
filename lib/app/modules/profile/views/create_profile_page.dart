@@ -27,13 +27,37 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     profileController = Get.find<ProfileController>();
   }
 
+  // Mengubah fungsi untuk memilih gambar dari galeri atau kamera
   Future<void> _pickImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    setState(() {
-      if (pickedFile != null) {
+    final picker = ImagePicker();
+    final pickedFile = await showDialog<XFile>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('Select Image'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final file = await picker.pickImage(source: ImageSource.camera);
+              Navigator.pop(context, file);
+            },
+            child: Text('Take Photo'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final file = await picker.pickImage(source: ImageSource.gallery);
+              Navigator.pop(context, file);
+            },
+            child: Text('Choose from Gallery'),
+          ),
+        ],
+      ),
+    );
+
+    if (pickedFile != null) {
+      setState(() {
         _image = File(pickedFile.path);
-      }
-    });
+      });
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
