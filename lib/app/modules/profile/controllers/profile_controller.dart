@@ -16,18 +16,16 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchProfile(); // Call to fetch the profile data
-    fetchProfileName(); // Call to fetch the profile name
+    fetchProfile();
+    fetchProfileName();
   }
 
   Future<void> fetchProfile() async {
-    User? user = _auth.currentUser; // Mendapatkan pengguna saat ini
+    User? user = _auth.currentUser;
     if (user != null) {
       try {
-        DocumentSnapshot snapshot = await _firestore
-            .collection('profiles')
-            .doc(user.uid)
-            .get(); // Use UID instead of email
+        DocumentSnapshot snapshot =
+            await _firestore.collection('profiles').doc(user.uid).get();
 
         if (snapshot.exists) {
           profiles.add(
@@ -45,8 +43,7 @@ class ProfileController extends GetxController {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
-        profileName.value =
-            'No Profile'; // Tampilkan pesan jika tidak ada ID pengguna
+        profileName.value = 'No Profile';
         return;
       }
 

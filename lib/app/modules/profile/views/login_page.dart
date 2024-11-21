@@ -21,11 +21,27 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    // Periksa apakah email dan password tidak kosong
+    if (email.isEmpty || password.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Email and password cannot be empty",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // Lakukan login
     try {
       final UserCredential userCredential =
           await _auth.signInWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
+        email: email,
+        password: password,
       );
 
       if (userCredential.user != null) {
@@ -33,7 +49,14 @@ class _LoginPageState extends State<LoginPage> {
         Get.offNamed('/home');
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
+      // Jika ada kesalahan saat login, tampilkan pesan kesalahan
+      Get.snackbar(
+        "Error",
+        "Login failed. Please check your email and password.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
