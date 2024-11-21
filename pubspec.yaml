@@ -21,7 +21,6 @@ dependencies:
   cloud_firestore: ^4.15.8
   firebase_storage: ^11.2.2
   google_sign_in: ^6.2.1
-  speech_to_text: ^6.6.0 
 
   intl: ^0.18.1 
 
