@@ -12,16 +12,14 @@ class AccountPage extends StatelessWidget {
       appBar: AppBar(title: Text('Your Profile')),
       body: Obx(() {
         if (profileController.profiles.isEmpty) {
-          return Center(
-              child: Text("No profiles available.")); // Jika tidak ada profil
+          return Center(child: Text("No profiles available."));
         }
         return ListView.builder(
           itemCount: profileController.profiles.length,
           itemBuilder: (context, index) {
             final profile = profileController.profiles[index];
             return ListTile(
-              leading: profile.imagePath.path
-                      .isNotEmpty // Memastikan untuk mengambil path dari File
+              leading: profile.imagePath.path.isNotEmpty
                   ? CircularProfileAvatar(
                       '',
                       radius: 30,
@@ -31,7 +29,7 @@ class AccountPage extends StatelessWidget {
                       elevation: 5.0,
                       child: ClipOval(
                         child: Image.file(
-                          profile.imagePath, // Mengambil gambar dari File
+                          profile.imagePath,
                           fit: BoxFit.cover,
                           width: 500,
                           height: 500,
@@ -41,10 +39,9 @@ class AccountPage extends StatelessWidget {
                         ),
                       ),
                     )
-                  : Icon(Icons.boy,
-                      size: 100), // Icon default jika tidak ada gambar
+                  : Icon(Icons.boy, size: 100),
               title: Text(
-                profile.nama, // Menampilkan nama
+                profile.nama,
                 style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
               ),
               subtitle: Column(
@@ -65,10 +62,7 @@ class AccountPage extends StatelessWidget {
       }),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Logika untuk logout, misalnya menghapus sesi pengguna
-          // Kemudian navigasi ke halaman login
-          Get.offNamed(
-              '/login'); // Pastikan rute '/login' sudah ada di aplikasi Anda
+          Get.offNamed('/login');
         },
         child: Icon(Icons.logout),
         tooltip: 'Logout',

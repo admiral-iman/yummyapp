@@ -45,7 +45,7 @@ class HomeView extends GetView<HomeController> {
       ),
       GestureDetector(
         onTap: () {
-          Get.to(AccountPage());
+          Get.to(() => AccountPage());
         },
         child: SvgPicture.asset('assets/user.svg', width: 40, height: 40),
       ),
