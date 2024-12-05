@@ -1,4 +1,5 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:demo_yummy/app/modules/audio/views/audio_view.dart';
 import 'package:demo_yummy/app/modules/home/views/food_cart_page.dart';
 import 'package:demo_yummy/app/modules/profile/views/account_page.dart';
 import 'package:demo_yummy/app/modules/recipe/views/recipe.dart';
@@ -40,8 +41,7 @@ class HomeView extends GetView<HomeController> {
         onTap: () {
           Get.to(VideoPage());
         },
-        child:
-            SvgPicture.asset('assets/notification.svg', width: 40, height: 40),
+        child: SvgPicture.asset('assets/story.svg', width: 40, height: 40),
       ),
       GestureDetector(
         onTap: () {

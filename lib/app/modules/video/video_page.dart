@@ -1,3 +1,4 @@
+import 'package:demo_yummy/app/modules/audio/views/audio_view.dart';
 import 'package:demo_yummy/app/modules/video/video_story.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -60,51 +61,66 @@ class _VideoPageState extends State<VideoPage> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // TextField align ke kiri
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                _controller == null
-                    ? Container()
-                    : _controller!.value.isInitialized
-                        ? GestureDetector(
-                            onTap: () {
-                              // Arahkan ke halaman Story
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      VideoStoryPage(controller: _controller!),
-                                ),
-                              );
-                            },
-                            child: Card(
-                              elevation: 5,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              child: ClipOval(
-                                child: Container(
-                                  width: 100,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Colors.grey.withOpacity(0.5),
-                                      width: 3,
+                Row(
+                  children: [
+                    _controller == null
+                        ? Container()
+                        : _controller!.value.isInitialized
+                            ? GestureDetector(
+                                onTap: () {
+                                  // Arahkan ke halaman Story
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => VideoStoryPage(
+                                          controller: _controller!),
                                     ),
+                                  );
+                                },
+                                child: Card(
+                                  elevation: 5,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50),
                                   ),
                                   child: ClipOval(
-                                    // Apply ClipOval again
-                                    child: AspectRatio(
-                                      aspectRatio:
-                                          _controller!.value.aspectRatio,
-                                      child: VideoPlayer(_controller!),
+                                    child: Container(
+                                      width: 100,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(0.5),
+                                          width: 3,
+                                        ),
+                                      ),
+                                      child: ClipOval(
+                                        child: AspectRatio(
+                                          aspectRatio:
+                                              _controller!.value.aspectRatio,
+                                          child: VideoPlayer(_controller!),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          )
-                        : CircularProgressIndicator(),
+                              )
+                            : CircularProgressIndicator(),
+                    SizedBox(width: 16), // Jarak antara ClipOval dan tombol
+                    FloatingActionButton(
+                      onPressed: () {
+                        // Arahkan ke halaman audio_view.dart
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AudioPlayerView()),
+                        );
+                      },
+                      mini: true, // Tombol kecil
+                      child: Icon(Icons.add), // Ikon tombol "+"
+                    ),
+                  ],
+                ),
                 SizedBox(height: 20),
                 Text('Enter your caption:', style: TextStyle(fontSize: 16)),
                 SizedBox(height: 8),
@@ -116,15 +132,6 @@ class _VideoPageState extends State<VideoPage> {
                   ),
                 ),
               ],
-            ),
-          ),
-          Positioned(
-            top: 20,
-            left: 20,
-            child: ClipOval(
-              child: Material(
-                color: Colors.transparent, // Remove background color
-              ),
             ),
           ),
         ],
