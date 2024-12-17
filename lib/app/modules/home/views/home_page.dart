@@ -1,6 +1,6 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:demo_yummy/app/modules/audio/views/audio_view.dart';
 import 'package:demo_yummy/app/modules/home/views/food_cart_page.dart';
+import 'package:demo_yummy/app/modules/lokasi/views/locationpage.dart';
 import 'package:demo_yummy/app/modules/profile/views/account_page.dart';
 import 'package:demo_yummy/app/modules/recipe/views/recipe.dart';
 import 'package:demo_yummy/app/modules/video/video_page.dart';
@@ -25,9 +25,10 @@ class HomeView extends GetView<HomeController> {
       SvgPicture.asset('assets/home.svg', width: 40, height: 40),
       GestureDetector(
         onTap: () {
-          Get.to(() => RecipeWebView(
-                url: 'https://www.spoonacular.com',
-              ));
+          Get.to(LocationPage());
+          // Get.to(() => RecipeWebView(
+          //       url: 'https://www.spoonacular.com',
+          //     ));
         },
         child: SvgPicture.asset('assets/web.svg', width: 40, height: 40),
       ),

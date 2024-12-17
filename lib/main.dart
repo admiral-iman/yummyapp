@@ -34,7 +34,7 @@ class YummyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Yummy App',
-      initialRoute: '/onboarding',
+      initialRoute: '/home',
       getPages: [
         GetPage(name: '/onboarding', page: () => OnboardingPage()),
         GetPage(name: '/upload-profile', page: () => CreateProfilePage()),
