@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class CreateRecipePage extends StatefulWidget {
   @override
@@ -14,8 +16,61 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
   final TextEditingController _descriptionController = TextEditingController();
   File? _image;
   final picker = ImagePicker();
+  final GetStorage _storage = GetStorage();
 
-  // Mengubah fungsi untuk memilih dari galeri atau kamera
+  // Fungsi untuk memeriksa koneksi internet menggunakan Connectivity Plus
+  Future<bool> _isInternetAvailable() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult == ConnectivityResult.none) {
+      return false;
+    }
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _uploadOfflineRecipes() async {
+    bool internetAvailable = await _isInternetAvailable();
+    if (internetAvailable) {
+      List<dynamic> offlineRecipes = _storage.read('offlineRecipes') ?? [];
+
+      for (var recipeData in offlineRecipes) {
+        try {
+          String? imageUrl;
+
+          if (recipeData['imagePath'] != null) {
+            File imageFile = File(recipeData['imagePath']);
+            final storageRef = FirebaseStorage.instance
+                .ref()
+                .child('recipes/${DateTime.now().toString()}');
+            await storageRef.putFile(imageFile);
+            imageUrl = await storageRef.getDownloadURL();
+          }
+
+          await FirebaseFirestore.instance.collection('recipes').add({
+            'name': recipeData['name'],
+            'description': recipeData['description'],
+            'imageUrl': imageUrl,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          offlineRecipes.remove(recipeData);
+        } catch (e) {
+          print('Error uploading offline recipe: $e');
+        }
+      }
+
+      if (offlineRecipes.isNotEmpty) {
+        _storage.write('offlineRecipes', offlineRecipes);
+      } else {
+        _storage.remove('offlineRecipes');
+      }
+    }
+  }
+
   Future<void> _pickImage() async {
     final pickedFile = await showDialog<XFile>(
       context: context,
@@ -48,26 +103,57 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
   }
 
   Future<void> _uploadRecipe() async {
-    if (_nameController.text.isEmpty || _descriptionController.text.isEmpty)
+    if (_nameController.text.isEmpty || _descriptionController.text.isEmpty) {
       return;
-
-    String? imageUrl;
-    if (_image != null) {
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('recipes/${DateTime.now().toString()}');
-      await storageRef.putFile(_image!);
-      imageUrl = await storageRef.getDownloadURL();
     }
 
-    FirebaseFirestore.instance.collection('recipes').add({
+    bool internetAvailable = await _isInternetAvailable();
+    String? imageUrl;
+
+    if (internetAvailable) {
+      try {
+        if (_image != null) {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('recipes/${DateTime.now().toString()}');
+          await storageRef.putFile(_image!);
+          imageUrl = await storageRef.getDownloadURL();
+        }
+
+        await FirebaseFirestore.instance.collection('recipes').add({
+          'name': _nameController.text,
+          'description': _descriptionController.text,
+          'imageUrl': imageUrl,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        Navigator.pop(context);
+      } catch (e) {
+        print('Error uploading recipe: $e');
+        _saveToLocal(imageUrl);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Saved locally due to network issues.')),
+        );
+      }
+    } else {
+      _saveToLocal(null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No internet connection. Data saved locally.')),
+      );
+      Navigator.pop(context);
+    }
+  }
+
+  void _saveToLocal(String? imageUrl) {
+    List<dynamic> recipes = _storage.read('offlineRecipes') ?? [];
+    recipes.add({
       'name': _nameController.text,
       'description': _descriptionController.text,
+      'imagePath': _image?.path,
       'imageUrl': imageUrl,
-      'createdAt': FieldValue.serverTimestamp(),
-    }).then((_) {
-      Navigator.pop(context);
+      'createdAt': DateTime.now().toIso8601String(),
     });
+    _storage.write('offlineRecipes', recipes);
   }
 
   @override

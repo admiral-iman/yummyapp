@@ -1,27 +1,39 @@
-import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class RecipeController extends GetxController {
-  // Fungsi untuk menghapus item
-  Future<void> deleteItem(String docId, String? imageUrl) async {
+  Future<void> deleteItem(String docId, String imageUrl) async {
     try {
       // Hapus dokumen dari Firestore
       await FirebaseFirestore.instance
           .collection('recipes')
           .doc(docId)
           .delete();
-      print('Dokumen berhasil dihapus dari Firestore');
 
-      // Hapus gambar dari Storage jika imageUrl tidak null dan tidak kosong
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        await FirebaseStorage.instance.refFromURL(imageUrl).delete();
-        print('Gambar berhasil dihapus dari Storage');
-      } else {
-        print('imageUrl is null or empty, skipping deletion from Storage');
+      // Jika ada file di Firebase Storage (contoh penghapusan image)
+      if (imageUrl.isNotEmpty) {
+        // Tambahkan logika penghapusan file jika perlu
+        // await FirebaseStorage.instance.refFromURL(imageUrl).delete();
       }
+
+      // Tampilkan Snackbar untuk konfirmasi
+      Get.snackbar(
+        'Berhasil',
+        'Resep berhasil dihapus',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } catch (e) {
-      print('Gagal menghapus item: $e');
+      // Tangani exception
+      Get.snackbar(
+        'Error',
+        'Gagal menghapus resep: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 }

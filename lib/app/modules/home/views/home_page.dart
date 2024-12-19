@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:demo_yummy/app/modules/home/views/food_cart_page.dart';
 import 'package:demo_yummy/app/modules/lokasi/views/locationpage.dart';
@@ -12,46 +13,96 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:demo_yummy/app/data/services/api_services.dart';
 import 'package:demo_yummy/app/data/models/recipe_model.dart';
 import 'package:demo_yummy/app/modules/webview/views/recipe_webview.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-class HomeView extends GetView<HomeController> {
+class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
 
   @override
+  _HomeViewState createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  final ProfileController profileController = Get.find<ProfileController>();
+
+  final items = <Widget>[
+    SvgPicture.asset('assets/home.svg', width: 40, height: 40),
+    GestureDetector(
+      onTap: () {
+        Get.to(LocationPage());
+      },
+      child: SvgPicture.asset('assets/web.svg', width: 40, height: 40),
+    ),
+    GestureDetector(
+      onTap: () {
+        Get.to(RecipePage());
+      },
+      child: SvgPicture.asset('assets/Chef.svg', width: 40, height: 40),
+    ),
+    GestureDetector(
+      onTap: () {
+        Get.to(VideoPage());
+      },
+      child: SvgPicture.asset('assets/story.svg', width: 40, height: 40),
+    ),
+    GestureDetector(
+      onTap: () {
+        Get.to(() => AccountPage());
+      },
+      child: SvgPicture.asset('assets/user.svg', width: 40, height: 40),
+    ),
+  ];
+
+  final RxList<Recipe> recipes = <Recipe>[].obs;
+  final RxBool isConnected = true.obs;
+
+  // Update the variable type to StreamSubscription<ConnectivityResult>
+  // Correct the type of the subscription
+  late StreamSubscription<List<ConnectivityResult>> connectivitySubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+      (List<ConnectivityResult> result) {
+        if (result.isEmpty || result.contains(ConnectivityResult.none)) {
+          isConnected.value = false;
+          recipes
+              .clear(); // Clear recipes immediately when the connection is lost
+          Get.snackbar(
+            'No Internet Connection',
+            'Please check your connection.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+          );
+        } else {
+          isConnected.value = true;
+          fetchRecipes().then((data) {
+            // Only update recipes if the connection is restored
+            recipes.addAll(data);
+          });
+          // Show snackbar when connected to the internet
+          Get.snackbar(
+            'Connected',
+            'You are now connected to the internet.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    connectivitySubscription.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final ProfileController profileController = Get.find<ProfileController>();
-
-    final items = <Widget>[
-      SvgPicture.asset('assets/home.svg', width: 40, height: 40),
-      GestureDetector(
-        onTap: () {
-          Get.to(LocationPage());
-          // Get.to(() => RecipeWebView(
-          //       url: 'https://www.spoonacular.com',
-          //     ));
-        },
-        child: SvgPicture.asset('assets/web.svg', width: 40, height: 40),
-      ),
-      GestureDetector(
-        onTap: () {
-          Get.to(RecipePage());
-        },
-        child: SvgPicture.asset('assets/Chef.svg', width: 40, height: 40),
-      ),
-      GestureDetector(
-        onTap: () {
-          Get.to(VideoPage());
-        },
-        child: SvgPicture.asset('assets/story.svg', width: 40, height: 40),
-      ),
-      GestureDetector(
-        onTap: () {
-          Get.to(() => AccountPage());
-        },
-        child: SvgPicture.asset('assets/user.svg', width: 40, height: 40),
-      ),
-    ];
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -85,47 +136,65 @@ class HomeView extends GetView<HomeController> {
                 ),
               ),
               Expanded(
-                child: FutureBuilder<List<Recipe>>(
-                  future: fetchRecipes(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                      return GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.8,
-                        ),
-                        itemCount: snapshot.data!.length,
-                        shrinkWrap: true,
-                        physics: NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          final recipe = snapshot.data![index];
-                          return GestureDetector(
-                            onTap: () {
-                              if (recipe.spoonacularSourceUrl != null) {
-                                Get.toNamed('/recipe-webview',
-                                    arguments: recipe.spoonacularSourceUrl);
-                              } else {
-                                Get.snackbar('Error',
-                                    'No URL available for this recipe');
-                              }
-                            },
-                            child: FoodCard(
-                              title: recipe.title ?? 'No Title',
-                              imagePath:
-                                  recipe.imageUrl ?? 'assets/default_image.png',
-                            ),
-                          );
-                        },
-                      );
-                    } else {
-                      return Center(child: Text('No data found'));
-                    }
-                  },
-                ),
+                child: Obx(() {
+                  // Only show recipes when connected to the internet
+                  if (!isConnected.value) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.signal_wifi_off,
+                              size: 50, color: Colors.grey),
+                          SizedBox(height: 10),
+                          Text("No Internet Connection"),
+                        ],
+                      ),
+                    );
+                  }
+                  return FutureBuilder<List<Recipe>>(
+                    future: fetchRecipes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (snapshot.hasData &&
+                          snapshot.data!.isNotEmpty) {
+                        return GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.8,
+                          ),
+                          itemCount: snapshot.data!.length,
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            final recipe = snapshot.data![index];
+                            return GestureDetector(
+                              onTap: () {
+                                if (recipe.spoonacularSourceUrl != null) {
+                                  Get.toNamed('/recipe-webview',
+                                      arguments: recipe.spoonacularSourceUrl);
+                                } else {
+                                  Get.snackbar('Error',
+                                      'No URL available for this recipe');
+                                }
+                              },
+                              child: FoodCard(
+                                title: recipe.title ?? 'No Title',
+                                imagePath: recipe.imageUrl ??
+                                    'assets/default_image.png',
+                              ),
+                            );
+                          },
+                        );
+                      } else {
+                        return Center(child: Text('No data found'));
+                      }
+                    },
+                  );
+                }),
               ),
             ],
           ),
@@ -200,6 +269,11 @@ class HomeView extends GetView<HomeController> {
       return await ApiService.instance.fetchAllRecipes();
     } catch (e) {
       print('Error fetching recipes: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to fetch recipes. Please try again later.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return [];
     }
   }

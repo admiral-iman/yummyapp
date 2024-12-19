@@ -2,10 +2,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class HomeController extends GetxController {
   // Initialize SpeechToText instance
   final stt.SpeechToText _speech = stt.SpeechToText();
+  var isConnected = true.obs;
 
   // Reactive variables
   final count = 0.obs;
