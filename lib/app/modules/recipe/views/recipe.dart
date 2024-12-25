@@ -1,13 +1,10 @@
-import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:demo_yummy/app/modules/recipe/controllers/recipe_controller.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'create_recipe.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 class RecipePage extends StatefulWidget {
   @override
@@ -16,82 +13,20 @@ class RecipePage extends StatefulWidget {
 
 class _RecipePageState extends State<RecipePage> {
   final RecipeController recipeController = Get.put(RecipeController());
-  final CollectionReference recipes =
-      FirebaseFirestore.instance.collection('recipes');
   final GetStorage _storage = GetStorage();
   bool isConnected = true;
-
-  Future<bool> _isInternetAvailable() async {
-    var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
-      return false;
-    }
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  // Fungsi untuk mengunggah resep yang disimpan offline
-  Future<void> _uploadOfflineRecipes() async {
-    if (!isConnected) return; // Tidak mengupload jika tidak ada koneksi
-
-    // Ambil data offline dari GetStorage
-    List<dynamic> offlineRecipes = _storage.read('offlineRecipes') ?? [];
-
-    for (var recipeData in List.from(offlineRecipes)) {
-      try {
-        // Ambil path gambar dari data lokal
-        String? imageUrl;
-
-        if (recipeData['imagePath'] != null) {
-          File imageFile = File(recipeData['imagePath']);
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('recipes/${DateTime.now().toString()}');
-          await storageRef.putFile(imageFile);
-          imageUrl = await storageRef.getDownloadURL();
-        }
-
-        // Unggah resep ke Firestore
-        await FirebaseFirestore.instance.collection('recipes').add({
-          'name': recipeData['name'],
-          'description': recipeData['description'],
-          'imageUrl': imageUrl,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        // Hapus resep yang sudah berhasil diunggah dari GetStorage
-        offlineRecipes.remove(recipeData);
-      } catch (e) {
-        print('Error uploading offline recipe: $e');
-      }
-    }
-
-    // Simpan kembali data offline setelah diunggah
-    if (offlineRecipes.isNotEmpty) {
-      _storage.write('offlineRecipes', offlineRecipes);
-    } else {
-      _storage.remove(
-          'offlineRecipes'); // Hapus data offline jika sudah berhasil diunggah
-    }
-  }
 
   @override
   void initState() {
     super.initState();
 
-    // Cek koneksi internet saat aplikasi pertama kali dimulai
-    _isInternetAvailable().then((connected) {
+    recipeController.isInternetAvailable().then((connected) {
       setState(() {
         isConnected = connected;
       });
 
-      // Jika online, upload resep offline yang disimpan
       if (connected) {
-        _uploadOfflineRecipes();
+        recipeController.uploadOfflineRecipes();
       }
     });
   }
@@ -114,7 +49,7 @@ class _RecipePageState extends State<RecipePage> {
         ],
       ),
       body: FutureBuilder<bool>(
-        future: _isInternetAvailable(),
+        future: recipeController.isInternetAvailable(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -124,13 +59,14 @@ class _RecipePageState extends State<RecipePage> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('No internet connection.'),
+                  content: Text('No internet connection.',
+                      style: TextStyle(color: Colors.white)),
+                  backgroundColor: Colors.redAccent,
                   duration: Duration(seconds: 3),
                 ),
               );
             });
 
-            // Fetch offline recipes if no internet
             List<dynamic> offlineRecipes =
                 _storage.read('offlineRecipes') ?? [];
 
@@ -138,96 +74,11 @@ class _RecipePageState extends State<RecipePage> {
               return Center(child: Text('No recipes available.'));
             }
 
-            // Display offline recipes
-            return StreamBuilder<QuerySnapshot>(
-              stream: recipes.snapshots(),
-              builder: (context, firestoreSnapshot) {
-                if (firestoreSnapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
-
-                if (firestoreSnapshot.hasError) {
-                  return Center(
-                    child: Text('Error loading recipes from Firestore.'),
-                  );
-                }
-
-                final firestoreData = firestoreSnapshot.data!.docs;
-
-                // Combine offline and online recipes
-                final combinedRecipes = [
-                  ...offlineRecipes.map((offlineRecipe) {
-                    return {
-                      'name': offlineRecipe['name'],
-                      'description': offlineRecipe['description'],
-                      'imageUrl': offlineRecipe['imageUrl'],
-                    };
-                  }),
-                  ...firestoreData.map((firestoreRecipe) {
-                    return {
-                      'name': firestoreRecipe['name'],
-                      'description': firestoreRecipe['description'],
-                      'imageUrl': firestoreRecipe['imageUrl'],
-                    };
-                  }),
-                ];
-
-                return ListView.builder(
-                  itemCount: combinedRecipes.length,
-                  itemBuilder: (context, index) {
-                    var recipe = combinedRecipes[index];
-                    var imageUrl =
-                        recipe['imageUrl'] ?? ''; // Handle missing imageUrl
-
-                    return Card(
-                      child: ListTile(
-                        leading: imageUrl.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: imageUrl,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) =>
-                                    CircularProgressIndicator(),
-                                errorWidget: (context, url, error) =>
-                                    Icon(Icons.error),
-                              )
-                            : Icon(Icons.image),
-                        title: Text(recipe['name']),
-                        subtitle: Text(recipe['description']),
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () async {
-                            // Handle deleting recipe
-                            if (index < offlineRecipes.length) {
-                              // Delete from offline storage
-                              offlineRecipes.removeAt(index);
-                              _storage.write('offlineRecipes', offlineRecipes);
-                            } else {
-                              // Delete from Firestore
-                              var firestoreRecipe =
-                                  firestoreData[index - offlineRecipes.length];
-                              await recipeController.deleteItem(
-                                  firestoreRecipe.id, recipe['imageUrl']);
-                            }
-                            setState(() {});
-                          },
-                        ),
-                        onTap: () {
-                          // Navigate to edit page if needed
-                        },
-                      ),
-                    );
-                  },
-                );
-              },
-            );
+            return _buildRecipeGrid(offlineRecipes, []);
           }
 
-          // If connected to the internet, fetch and display data from Firestore
           return StreamBuilder<QuerySnapshot>(
-            stream: recipes.snapshots(),
+            stream: recipeController.recipes.snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
@@ -240,80 +91,246 @@ class _RecipePageState extends State<RecipePage> {
               }
 
               final firestoreData = snapshot.data!.docs;
-
-              // Fetch offline recipes from GetStorage
               List<dynamic> offlineRecipes =
                   _storage.read('offlineRecipes') ?? [];
-
-              // Combine offline and online recipes
-              final combinedRecipes = [
-                ...offlineRecipes.map((offlineRecipe) {
-                  return {
-                    'name': offlineRecipe['name'],
-                    'description': offlineRecipe['description'],
-                    'imageUrl': offlineRecipe['imageUrl'],
-                  };
-                }),
-                ...firestoreData.map((firestoreRecipe) {
-                  return {
-                    'name': firestoreRecipe['name'],
-                    'description': firestoreRecipe['description'],
-                    'imageUrl': firestoreRecipe['imageUrl'],
-                  };
-                }),
-              ];
-
-              return ListView.builder(
-                itemCount: combinedRecipes.length,
-                itemBuilder: (context, index) {
-                  var recipe = combinedRecipes[index];
-                  var imageUrl =
-                      recipe['imageUrl'] ?? ''; // Handle missing imageUrl
-
-                  return Card(
-                    child: ListTile(
-                      leading: imageUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: imageUrl,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) =>
-                                  CircularProgressIndicator(),
-                              errorWidget: (context, url, error) =>
-                                  Icon(Icons.error),
-                            )
-                          : Icon(Icons.image),
-                      title: Text(recipe['name']),
-                      subtitle: Text(recipe['description']),
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () async {
-                          // Handle deleting recipe
-                          if (index < offlineRecipes.length) {
-                            // Delete from offline storage
-                            offlineRecipes.removeAt(index);
-                            _storage.write('offlineRecipes', offlineRecipes);
-                          } else {
-                            // Delete from Firestore
-                            var firestoreRecipe =
-                                firestoreData[index - offlineRecipes.length];
-                            await recipeController.deleteItem(
-                                firestoreRecipe.id, recipe['imageUrl']);
-                          }
-                          setState(() {});
-                        },
-                      ),
-                      onTap: () {
-                        // Navigate to edit page if needed
-                      },
-                    ),
-                  );
-                },
-              );
+              return _buildRecipeGrid(offlineRecipes, firestoreData);
             },
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildRecipeGrid(
+      List<dynamic> offlineRecipes, List<QueryDocumentSnapshot> firestoreData) {
+    final combinedRecipes = [
+      ...offlineRecipes.map((recipe) => {
+            'name': recipe['name'],
+            'description': recipe['description'],
+            'imageUrl': recipe['imageUrl'],
+          }),
+      ...firestoreData.map((recipe) => {
+            'name': recipe['name'],
+            'description': recipe['description'],
+            'imageUrl': recipe['imageUrl'],
+          }),
+    ];
+
+    return GridView.builder(
+      padding: EdgeInsets.all(8.0),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3, // Number of columns in the grid
+        crossAxisSpacing: 8.0,
+        mainAxisSpacing: 8.0,
+      ),
+      itemCount: combinedRecipes.length,
+      itemBuilder: (context, index) {
+        var recipe = combinedRecipes[index];
+        return GestureDetector(
+          onTap: () => _showRecipeDetails(context, recipe),
+          child: CachedNetworkImage(
+            imageUrl: recipe['imageUrl'],
+            fit: BoxFit.cover,
+            placeholder: (context, url) => CircularProgressIndicator(),
+            errorWidget: (context, url, error) => Icon(Icons.error),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showRecipeDetails(BuildContext context, Map<String, dynamic> recipe) {
+    // Ganti Dialog dengan halaman baru (full screen)
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipeDetailPage(recipe: recipe),
+      ),
+    );
+  }
+}
+
+class RecipeDetailPage extends StatelessWidget {
+  final Map<String, dynamic> recipe;
+  RecipeDetailPage({required this.recipe});
+  final RecipeController recipeController = Get.put(RecipeController());
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(recipe['name']),
+        actions: [
+          PopupMenuButton<int>(
+              icon: Icon(Icons.more_vert), // Ikon titik tiga
+              itemBuilder: (context) => [
+                    PopupMenuItem<int>(
+                      value: 1,
+                      child: Text('Edit'),
+                    ),
+                    PopupMenuItem<int>(
+                      value: 2,
+                      child: Text('Delete'),
+                    ),
+                  ],
+              onSelected: (value) {
+                if (value == 1) {
+                  // Aksi untuk Edit
+                  //_editRecipe(recipe);
+                } else if (value == 2) {
+                  // Aksi untuk Delete
+                  final String id = recipe['id']; // Ambil ID dari resep
+                  final String? imageUrl =
+                      recipe['imageUrl']; // Ambil imageUrl dari resep
+
+                  // Panggil fungsi deleteRecipe
+                  recipeController.deleteRecipe(id, imageUrl);
+
+                  // Menampilkan snack bar setelah menghapus resep
+                  Get.snackbar('Success', 'Recipe deleted successfully',
+                      backgroundColor: Colors.green, colorText: Colors.white);
+
+                  // Kembali ke halaman sebelumnya setelah penghapusan
+                  Navigator.pop(context);
+                }
+              })
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Image at the top
+            CachedNetworkImage(
+              imageUrl: recipe['imageUrl'],
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.5,
+              placeholder: (context, url) => AspectRatio(
+                aspectRatio: 1,
+                child: Container(
+                  color: Colors.grey[300],
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
+              errorWidget: (context, url, error) => AspectRatio(
+                aspectRatio: 1,
+                child: Container(
+                  color: Colors.grey[300],
+                  child: Icon(Icons.error),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Action buttons for like, comment, etc.
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.favorite_border),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.chat_bubble_outline),
+                        onPressed: () {},
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.send),
+                        onPressed: () {},
+                      ),
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.bookmark_border),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                  // Likes count
+                  Text(
+                    '120 likes',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  // Recipe name and description
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(color: Colors.black),
+                      children: [
+                        TextSpan(
+                          text: recipe['name'],
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: '  '),
+                        TextSpan(
+                          text: recipe['description'],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  // Comments section
+                  Text(
+                    'View all 50 comments',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  SizedBox(height: 16),
+                  // Time ago
+                  Text(
+                    '2 HOURS AGO',
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  // Comment input section
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: Colors.grey[300]!),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.grey[300],
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.grey[600],
+                            size: 20,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Add a comment...',
+                              border: InputBorder.none,
+                              hintStyle: TextStyle(color: Colors.grey[500]),
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: Text(
+                            'Post',
+                            style: TextStyle(
+                              color: Colors.blue[300],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

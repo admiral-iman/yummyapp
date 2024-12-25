@@ -18,7 +18,6 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
   final birthDateController = TextEditingController();
   final passwordController = TextEditingController();
   String? selectedGender;
-
   late ProfileController profileController;
 
   @override
@@ -27,45 +26,98 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     profileController = Get.find<ProfileController>();
   }
 
-  // Mengubah fungsi untuk memilih gambar dari galeri atau kamera
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await showDialog<XFile>(
+    final pickedFile = await showModalBottomSheet<XFile>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text('Select Image'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final file = await picker.pickImage(source: ImageSource.camera);
-              Navigator.pop(context, file);
-            },
-            child: Text('Take Photo'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final file = await picker.pickImage(source: ImageSource.gallery);
-              Navigator.pop(context, file);
-            },
-            child: Text('Choose from Gallery'),
-          ),
-        ],
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) => Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select Image',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildImagePickerOption(
+                  icon: Icons.camera_alt,
+                  label: 'Camera',
+                  onTap: () async {
+                    final file =
+                        await picker.pickImage(source: ImageSource.camera);
+                    Navigator.pop(context, file);
+                  },
+                ),
+                _buildImagePickerOption(
+                  icon: Icons.photo_library,
+                  label: 'Gallery',
+                  onTap: () async {
+                    final file =
+                        await picker.pickImage(source: ImageSource.gallery);
+                    Navigator.pop(context, file);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
 
     if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
+      setState(() => _image = File(pickedFile.path));
     }
   }
 
+  Widget _buildImagePickerOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 30, color: Colors.orange),
+          ),
+          SizedBox(height: 10),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
   Future<void> _selectDate(BuildContext context) async {
-    DateTime? picked = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(primary: Colors.blue),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -76,121 +128,211 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
   }
 
   Future<void> _submitProfile() async {
+    if (_validateForm()) {
+      Profile newProfile = Profile(
+        nama: nameController.text,
+        email: emailController.text,
+        birthDate: birthDateController.text,
+        gender: selectedGender!,
+        imagePath: _image!,
+      );
+
+      await profileController.registerUser(
+        emailController.text,
+        passwordController.text,
+        newProfile,
+      );
+    }
+  }
+
+  bool _validateForm() {
     if (_image == null) {
-      Get.snackbar("Error", "Please select an image.",
-          snackPosition: SnackPosition.BOTTOM);
-      return;
+      _showError("Please select a profile image");
+      return false;
     }
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty ||
         birthDateController.text.isEmpty ||
         selectedGender == null) {
-      Get.snackbar("Error", "All fields are required.",
-          snackPosition: SnackPosition.BOTTOM);
-      return;
+      _showError("All fields are required");
+      return false;
     }
+    return true;
+  }
 
-    Profile newProfile = Profile(
-      nama: nameController.text,
-      email: emailController.text,
-      birthDate: birthDateController.text,
-      gender: selectedGender!,
-      imagePath: _image!,
-    );
-
-    await profileController.registerUser(
-      emailController.text,
-      passwordController.text,
-      newProfile,
+  void _showError(String message) {
+    Get.snackbar(
+      "Error",
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red[100],
+      colorText: Colors.red[900],
+      margin: EdgeInsets.all(8),
+      borderRadius: 8,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(
+        title: Text('Create Profile'),
+        elevation: 0,
+        backgroundColor: Colors.orange,
+      ),
+      body: Container(
+        color: Colors.grey[50],
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 200,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(color: Colors.orange),
-                  ),
-                  child: _image == null
-                      ? Center(
-                          child: Text(
-                            'Add Image',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        )
-                      : ClipOval(
-                          child: Image.file(
-                            _image!,
-                            fit: BoxFit.cover,
-                          ),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    height: 150,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.orange, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, 5),
                         ),
+                      ],
+                    ),
+                    child: _image == null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_a_photo,
+                                  size: 40, color: Colors.orange),
+                              SizedBox(height: 8),
+                              Text(
+                                'Add Photo',
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          )
+                        : ClipOval(
+                            child: Image.file(_image!, fit: BoxFit.cover),
+                          ),
+                  ),
                 ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'Name'),
-              ),
-              TextField(
-                controller: emailController,
-                decoration: InputDecoration(labelText: 'Email'),
-              ),
-              TextField(
-                controller: passwordController,
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-              ),
-              TextField(
-                controller: birthDateController,
-                decoration: InputDecoration(labelText: 'Birth Date'),
-                readOnly: true,
-                onTap: () => _selectDate(context),
-              ),
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(labelText: 'Gender'),
-                value: selectedGender,
-                items: ['Male', 'Female', 'Other'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    selectedGender = newValue;
-                  });
-                },
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _submitProfile,
-                child: Text('Submit Profile'),
-              ),
-              SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Get.toNamed('/login');
-                },
-                child: Text(
-                  'Already have an account? Log in',
-                  style: TextStyle(color: Colors.blue),
+                SizedBox(height: 30),
+                _buildInputField(
+                  controller: nameController,
+                  label: 'Full Name',
+                  icon: Icons.person,
                 ),
-              ),
-            ],
+                _buildInputField(
+                  controller: emailController,
+                  label: 'Email',
+                  icon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                _buildInputField(
+                  controller: passwordController,
+                  label: 'Password',
+                  icon: Icons.lock,
+                  isPassword: true,
+                ),
+                _buildInputField(
+                  controller: birthDateController,
+                  label: 'Birth Date',
+                  icon: Icons.cake,
+                  readOnly: true,
+                  onTap: () => _selectDate(context),
+                ),
+                Card(
+                  elevation: 0,
+                  color: Colors.white,
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: 'Gender',
+                        icon: Icon(Icons.people, color: Colors.orange),
+                        border: InputBorder.none,
+                      ),
+                      value: selectedGender,
+                      items: ['Male', 'Female', 'Other'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() => selectedGender = newValue);
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: _submitProfile,
+                  style: ElevatedButton.styleFrom(
+                    primary: Colors.orange,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(
+                    'Create Profile',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => Get.toNamed('/login'),
+                  child: Text(
+                    'Already have an account? Log in',
+                    style: TextStyle(color: Colors.orange[700]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+    bool readOnly = false,
+    TextInputType? keyboardType,
+    VoidCallback? onTap,
+  }) {
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      margin: EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12),
+        child: TextField(
+          controller: controller,
+          obscureText: isPassword,
+          readOnly: readOnly,
+          keyboardType: keyboardType,
+          onTap: onTap,
+          decoration: InputDecoration(
+            labelText: label,
+            icon: Icon(icon, color: Colors.orange),
+            border: InputBorder.none,
           ),
         ),
       ),

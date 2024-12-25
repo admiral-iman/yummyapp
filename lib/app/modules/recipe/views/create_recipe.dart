@@ -1,10 +1,5 @@
-import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:demo_yummy/app/modules/recipe/controllers/recipe_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 class CreateRecipePage extends StatefulWidget {
   @override
@@ -12,195 +7,127 @@ class CreateRecipePage extends StatefulWidget {
 }
 
 class _CreateRecipePageState extends State<CreateRecipePage> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  File? _image;
-  final picker = ImagePicker();
-  final GetStorage _storage = GetStorage();
-
-  // Fungsi untuk memeriksa koneksi internet menggunakan Connectivity Plus
-  Future<bool> _isInternetAvailable() async {
-    var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
-      return false;
-    }
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<void> _uploadOfflineRecipes() async {
-    bool internetAvailable = await _isInternetAvailable();
-    if (internetAvailable) {
-      List<dynamic> offlineRecipes = _storage.read('offlineRecipes') ?? [];
-
-      for (var recipeData in offlineRecipes) {
-        try {
-          String? imageUrl;
-
-          if (recipeData['imagePath'] != null) {
-            File imageFile = File(recipeData['imagePath']);
-            final storageRef = FirebaseStorage.instance
-                .ref()
-                .child('recipes/${DateTime.now().toString()}');
-            await storageRef.putFile(imageFile);
-            imageUrl = await storageRef.getDownloadURL();
-          }
-
-          await FirebaseFirestore.instance.collection('recipes').add({
-            'name': recipeData['name'],
-            'description': recipeData['description'],
-            'imageUrl': imageUrl,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-
-          offlineRecipes.remove(recipeData);
-        } catch (e) {
-          print('Error uploading offline recipe: $e');
-        }
-      }
-
-      if (offlineRecipes.isNotEmpty) {
-        _storage.write('offlineRecipes', offlineRecipes);
-      } else {
-        _storage.remove('offlineRecipes');
-      }
-    }
-  }
-
-  Future<void> _pickImage() async {
-    final pickedFile = await showDialog<XFile>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text('Select Image'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final file = await picker.pickImage(source: ImageSource.camera);
-              Navigator.pop(context, file);
-            },
-            child: Text('Take Photo'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final file = await picker.pickImage(source: ImageSource.gallery);
-              Navigator.pop(context, file);
-            },
-            child: Text('Choose from Gallery'),
-          ),
-        ],
-      ),
-    );
-
-    setState(() {
-      if (pickedFile != null) {
-        _image = File(pickedFile.path);
-      }
-    });
-  }
-
-  Future<void> _uploadRecipe() async {
-    if (_nameController.text.isEmpty || _descriptionController.text.isEmpty) {
-      return;
-    }
-
-    bool internetAvailable = await _isInternetAvailable();
-    String? imageUrl;
-
-    if (internetAvailable) {
-      try {
-        if (_image != null) {
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('recipes/${DateTime.now().toString()}');
-          await storageRef.putFile(_image!);
-          imageUrl = await storageRef.getDownloadURL();
-        }
-
-        await FirebaseFirestore.instance.collection('recipes').add({
-          'name': _nameController.text,
-          'description': _descriptionController.text,
-          'imageUrl': imageUrl,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        Navigator.pop(context);
-      } catch (e) {
-        print('Error uploading recipe: $e');
-        _saveToLocal(imageUrl);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Saved locally due to network issues.')),
-        );
-      }
-    } else {
-      _saveToLocal(null);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No internet connection. Data saved locally.')),
-      );
-      Navigator.pop(context);
-    }
-  }
-
-  void _saveToLocal(String? imageUrl) {
-    List<dynamic> recipes = _storage.read('offlineRecipes') ?? [];
-    recipes.add({
-      'name': _nameController.text,
-      'description': _descriptionController.text,
-      'imagePath': _image?.path,
-      'imageUrl': imageUrl,
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-    _storage.write('offlineRecipes', recipes);
-  }
+  final RecipeController _controller = RecipeController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Create Recipe')),
+      appBar: AppBar(
+        title: Text(
+          'Create Recipe',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.orange,
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: _image != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(100),
-                        child: Image.file(
-                          _image!,
+              Center(
+                child: GestureDetector(
+                  onTap: () async {
+                    await _controller.pickImage();
+                    setState(() {});
+                  },
+                  child: _controller.image != null
+                      ? ClipOval(
+                          child: Image.file(
+                            _controller.image!,
+                            height: 200,
+                            width: 200,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Container(
                           height: 200,
                           width: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.orange,
+                              width: 3,
+                            ),
+                          ),
+                          child: Icon(Icons.camera_alt,
+                              color: Colors.grey[700], size: 50),
                         ),
-                      )
-                    : Container(
-                        height: 200,
-                        width: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        child: Icon(Icons.camera_alt, color: Colors.grey[700]),
-                      ),
+                ),
+              ),
+              SizedBox(height: 30),
+              Text(
+                'Recipe Name',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              SizedBox(height: 8),
+              TextField(
+                controller: _controller.nameController,
+                decoration: InputDecoration(
+                  hintText: 'Enter recipe name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.orange),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.orange, width: 2),
+                  ),
+                ),
               ),
               SizedBox(height: 20),
-              TextField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: 'Name'),
+              Text(
+                'Description',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 8),
               TextField(
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+                controller: _controller.descriptionController,
+                decoration: InputDecoration(
+                  hintText: 'Write recipe details...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.teal),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.teal, width: 2),
+                  ),
+                ),
                 maxLines: 3,
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _uploadRecipe,
-                child: Text('Save Recipe'),
+              SizedBox(height: 30),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _controller.uploadRecipe(
+                      () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('Recipe uploaded successfully!')),
+                        );
+                        Navigator.pop(context);
+                      },
+                      (message) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(message)),
+                        );
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                  icon: Icon(Icons.save_alt),
+                  label: Text('Save Recipe'),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                    backgroundColor: Colors.orange,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),

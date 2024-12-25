@@ -24,7 +24,7 @@ class OnboardingPage extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () {
                       Get.offNamed(
-                          '/upload-profile'); // Menuju ke halaman upload profile
+                          '/login'); // Menuju ke halaman upload profile
                     },
                     child: const Text('Get Started'),
                   ),

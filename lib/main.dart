@@ -1,6 +1,7 @@
 import 'package:demo_yummy/app/modules/home/controllers/home_controller.dart';
 import 'package:demo_yummy/app/modules/notification/notification_service.dart';
 import 'package:demo_yummy/app/modules/profile/views/login_page.dart';
+import 'package:demo_yummy/app/modules/recipe/views/create_recipe.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -44,13 +45,14 @@ class YummyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Yummy App',
-      initialRoute: '/onboarding',
+      initialRoute: '/login',
       getPages: [
         GetPage(name: '/onboarding', page: () => OnboardingPage()),
         GetPage(name: '/upload-profile', page: () => CreateProfilePage()),
         GetPage(name: '/home', page: () => HomeView()),
         GetPage(name: '/account', page: () => AccountPage()),
         GetPage(name: '/login', page: () => LoginPage()),
+        GetPage(name: '/create-recipe', page: () => CreateRecipePage()),
       ],
     );
   }
