@@ -14,7 +14,7 @@
     </queries> 
 
     <application
-        android:label="demo_yummy"
+        android:label="Food Yummy "
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         

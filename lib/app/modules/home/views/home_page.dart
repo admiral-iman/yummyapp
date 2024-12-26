@@ -5,7 +5,7 @@ import 'package:demo_yummy/app/modules/webview/views/recipe_webview.dart';
 import 'package:demo_yummy/app/modules/lokasi/views/locationpage.dart';
 import 'package:demo_yummy/app/modules/profile/views/account_page.dart';
 import 'package:demo_yummy/app/modules/recipe/views/recipe.dart';
-import 'package:demo_yummy/app/modules/video/video_page.dart';
+import 'package:demo_yummy/app/modules/webview/views/recipe_webview.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
@@ -35,7 +35,7 @@ class _HomeViewState extends State<HomeView> {
     SvgPicture.asset('assets/home.svg', width: 40, height: 40),
     SvgPicture.asset('assets/web.svg', width: 40, height: 40),
     SvgPicture.asset('assets/Chef.svg', width: 40, height: 40),
-    SvgPicture.asset('assets/story.svg', width: 40, height: 40),
+    SvgPicture.asset('assets/lokasi.svg', width: 40, height: 40),
     SvgPicture.asset('assets/user.svg', width: 40, height: 40),
   ];
 
@@ -195,13 +195,14 @@ class _HomeViewState extends State<HomeView> {
             onTap: (index) {
               switch (index) {
                 case 1:
-                  Get.to(LocationPage());
+                  String recipeUrl = 'https://www.yummy.co.id/resep';
+                  Get.to(() => RecipeWebView(url: recipeUrl));
                   break;
                 case 2:
                   Get.to(RecipePage());
                   break;
                 case 3:
-                  Get.to(VideoPage());
+                  Get.to(LocationPage());
                   break;
                 case 4:
                   Get.to(() => AccountPage());

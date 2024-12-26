@@ -27,7 +27,8 @@ dependencies:
   geocoding: ^3.0.0
   google_maps_flutter: ^2.5.2
   url_launcher:  ^6.2.0
-  
+  flutter_native_splash: ^2.3.10
+  flutter_launcher_icons: ^0.13.1
 
   intl: ^0.18.1 
 
@@ -55,4 +56,14 @@ flutter:
     - assets/
     - assets/google.png
 
+flutter_native_splash:
+  color: "#ffffff"  
+  android: true
+  ios: true
+  fullscreen: true
 
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/app_icon.png" 
+  adaptive_icon_background: "#ffffff"
