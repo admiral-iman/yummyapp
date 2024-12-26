@@ -68,14 +68,57 @@ class RecipeController extends GetxController {
     }
   }
 
-  Future<void> deleteRecipe(String id, String? imageUrl) async {
+  Future<void> deleteRecipe(String? id, String? imageUrl) async {
+    // Debug print untuk melihat nilai id dan imageUrl
+    print('Attempting to delete recipe with ID: $id');
+    print('Image URL to delete: $imageUrl');
+
+    // Validasi ID
+    if (id == null || id.isEmpty) {
+      print('Error: Recipe ID is null or empty');
+      Get.snackbar(
+        'Error',
+        'Cannot delete recipe: Invalid ID',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     try {
-      if (imageUrl != null) {
-        await FirebaseStorage.instance.refFromURL(imageUrl).delete();
+      // 1. Hapus gambar jika ada
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        try {
+          await FirebaseStorage.instance.refFromURL(imageUrl).delete();
+          print('Image deleted successfully');
+        } catch (e) {
+          print('Error deleting image: $e');
+          // Lanjutkan proses meski gambar gagal dihapus
+        }
       }
-      await recipes.doc(id).delete();
+
+      // 2. Hapus dokumen dari Firestore
+      print('Deleting document with ID: $id');
+      await FirebaseFirestore.instance.collection('recipes').doc(id).delete();
+      print('Document deleted successfully');
+
+      Get.snackbar(
+        'Success',
+        'Recipe deleted successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } catch (e) {
-      print('Error deleting recipe: $e');
+      print('Error in deleteRecipe: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to delete recipe: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 

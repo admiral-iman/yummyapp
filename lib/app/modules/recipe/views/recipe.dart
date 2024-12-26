@@ -152,8 +152,40 @@ class _RecipePageState extends State<RecipePage> {
 
 class RecipeDetailPage extends StatelessWidget {
   final Map<String, dynamic> recipe;
-  RecipeDetailPage({required this.recipe});
+  RecipeDetailPage({required this.recipe}) {
+    print('RecipeDetailPage received recipe: $recipe'); // Debug print
+  }
   final RecipeController recipeController = Get.put(RecipeController());
+
+  void _deleteRecipe(BuildContext context, Map<String, dynamic> recipe) {
+    final String? id = recipe['id']; // Ambil ID dari resep
+    final String? imageUrl = recipe['imageUrl']; // Ambil imageUrl dari resep
+
+    if (id == null || imageUrl == null) {
+      // Menampilkan pesan kesalahan jika ID atau imageUrl tidak ada
+      Get.snackbar(
+        'Error',
+        'Recipe ID or image URL is missing!',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return; // Return early if either ID or imageUrl is null
+    }
+
+    // Panggil fungsi deleteRecipe
+    recipeController.deleteRecipe(id, imageUrl);
+
+    // Menampilkan snack bar setelah menghapus resep
+    Get.snackbar(
+      'Success',
+      'Recipe deleted successfully',
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
+
+    // Kembali ke halaman sebelumnya setelah penghapusan
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,38 +194,59 @@ class RecipeDetailPage extends StatelessWidget {
         title: Text(recipe['name']),
         actions: [
           PopupMenuButton<int>(
-              icon: Icon(Icons.more_vert), // Ikon titik tiga
-              itemBuilder: (context) => [
-                    PopupMenuItem<int>(
-                      value: 1,
-                      child: Text('Edit'),
-                    ),
-                    PopupMenuItem<int>(
-                      value: 2,
-                      child: Text('Delete'),
-                    ),
-                  ],
-              onSelected: (value) {
-                if (value == 1) {
-                  // Aksi untuk Edit
-                  //_editRecipe(recipe);
-                } else if (value == 2) {
-                  // Aksi untuk Delete
-                  final String id = recipe['id']; // Ambil ID dari resep
-                  final String? imageUrl =
-                      recipe['imageUrl']; // Ambil imageUrl dari resep
+            icon: Icon(Icons.more_vert), // Ikon titik tiga
+            itemBuilder: (context) => [
+              PopupMenuItem<int>(value: 1, child: Text('Edit')),
+              PopupMenuItem<int>(value: 2, child: Text('Delete')),
+            ],
+            onSelected: (value) async {
+              if (value == 1) {
+                // Aksi untuk Edit
+                //_editRecipe(recipe);
+              } else if (value == 2) {
+                // Get the recipe ID and image URL with null safety
+                final String? id = recipe['id'];
+                final String? imageUrl = recipe['imageUrl'];
 
-                  // Panggil fungsi deleteRecipe
-                  recipeController.deleteRecipe(id, imageUrl);
-
-                  // Menampilkan snack bar setelah menghapus resep
-                  Get.snackbar('Success', 'Recipe deleted successfully',
-                      backgroundColor: Colors.green, colorText: Colors.white);
-
-                  // Kembali ke halaman sebelumnya setelah penghapusan
-                  Navigator.pop(context);
+                // Check if ID exists
+                if (id == null) {
+                  Get.snackbar(
+                    'Error',
+                    'Cannot delete recipe: ID is missing',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                  return;
                 }
-              })
+
+                // Show confirmation dialog
+                bool confirm = await Get.dialog(
+                      AlertDialog(
+                        title: Text('Delete Recipe'),
+                        content: Text(
+                            'Are you sure you want to delete this recipe?'),
+                        actions: [
+                          TextButton(
+                            child: Text('Cancel'),
+                            onPressed: () => Get.back(result: false),
+                          ),
+                          TextButton(
+                            child: Text('Delete'),
+                            onPressed: () => Get.back(result: true),
+                          ),
+                        ],
+                      ),
+                    ) ??
+                    false;
+
+                if (confirm) {
+                  await recipeController.deleteRecipe(id, imageUrl);
+                  Get.back(); // Return to previous screen
+                }
+              }
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(

@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:demo_yummy/app/data/models/profile_model.dart';
 import 'package:demo_yummy/app/modules/recipe/controllers/recipe_controller.dart';
+import 'package:demo_yummy/app/modules/recipe/views/recipe.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -266,6 +268,98 @@ class _AccountPage extends State<AccountPage> {
     );
   }
 
+  Widget _buildRecipeGrid() {
+    return FutureBuilder<bool>(
+      future: recipeController.isInternetAvailable(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !(snapshot.data ?? true)) {
+          List<dynamic> offlineRecipes = _storage.read('offlineRecipes') ?? [];
+          if (offlineRecipes.isEmpty) {
+            return Center(child: Text('No recipes available.'));
+          }
+          return _buildGridView(offlineRecipes, []);
+        }
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: recipeController.recipes.snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(child: Text('Error loading recipes.'));
+            }
+
+            final firestoreData = snapshot.data!.docs;
+            List<dynamic> offlineRecipes =
+                _storage.read('offlineRecipes') ?? [];
+            return _buildGridView(offlineRecipes, firestoreData);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildGridView(
+      List<dynamic> offlineRecipes, List<QueryDocumentSnapshot> firestoreData) {
+    final combinedRecipes = [
+      ...offlineRecipes.map((recipe) => {
+            'name': recipe['name'],
+            'description': recipe['description'],
+            'imageUrl': recipe['imageUrl'],
+          }),
+      ...firestoreData.map((recipe) => {
+            'name': recipe['name'],
+            'description': recipe['description'],
+            'imageUrl': recipe['imageUrl'],
+          }),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.all(8.0),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 4.0,
+        mainAxisSpacing: 4.0,
+      ),
+      itemCount: combinedRecipes.length,
+      itemBuilder: (context, index) {
+        var recipe = combinedRecipes[index];
+        return GestureDetector(
+          onTap: () => _showRecipeDetails(context, recipe),
+          child: CachedNetworkImage(
+            imageUrl: recipe['imageUrl'],
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              color: Colors.grey[300],
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: Colors.grey[300],
+              child: Icon(Icons.error),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showRecipeDetails(BuildContext context, Map<String, dynamic> recipe) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipeDetailPage(recipe: recipe),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -306,97 +400,101 @@ class _AccountPage extends State<AccountPage> {
             itemCount: profileController.profiles.length,
             itemBuilder: (context, index) {
               final profile = profileController.profiles[index];
-              return Card(
-                elevation: 3,
-                margin: EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+              return Column(
+                children: [
+                  Card(
+                    elevation: 3,
+                    margin: EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        // Profile section
+                        Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildProfileImage(profile),
-                              SizedBox(width: 20),
-                              Expanded(
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    _buildStatColumn('Posts', '0'),
-                                    _buildStatColumn('Followers', '0'),
-                                    _buildStatColumn('Following', '0'),
-                                  ],
+                              Row(
+                                children: [
+                                  _buildProfileImage(profile),
+                                  SizedBox(width: 20),
+                                  Expanded(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        _buildStatColumn('Posts', '0'),
+                                        _buildStatColumn('Followers', '0'),
+                                        _buildStatColumn('Following', '0'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                profile.nama,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue[900],
                                 ),
                               ),
+                              Text(
+                                profile.email,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Get.toNamed('/editProfile',
+                                      arguments: profile);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  primary: Colors.white,
+                                  onPrimary: Colors.black87,
+                                  minimumSize: Size(double.infinity, 36),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    side: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                ),
+                                child: Text('Edit Profile'),
+                              ),
+                              Divider(height: 24),
+                              _buildInfoRow(Icons.cake, 'Birth Date',
+                                  profile.birthDate.toString()),
+                              SizedBox(height: 8),
+                              _buildInfoRow(Icons.person_outline, 'Gender',
+                                  profile.gender),
                             ],
                           ),
-                          SizedBox(height: 16),
-                          Text(
-                            profile.nama,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[900],
-                            ),
+                        ),
+                        // Grid icon section
+                        Container(
+                          height: 50,
+                          decoration: BoxDecoration(
+                            border: Border(
+                                top: BorderSide(color: Colors.grey[200]!)),
                           ),
-                          Text(
-                            profile.email,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Icon(Icons.grid_on, color: Colors.orange),
+                            ],
                           ),
-                          SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              Get.toNamed('/editProfile', arguments: profile);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              primary: Colors.white,
-                              onPrimary: Colors.black87,
-                              minimumSize: Size(double.infinity, 36),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                                side: BorderSide(color: Colors.grey[300]!),
-                              ),
-                            ),
-                            child: Text('Edit Profile'),
-                          ),
-                          Divider(height: 24),
-                          _buildInfoRow(Icons.cake, 'Birth Date',
-                              profile.birthDate.toString()),
-                          SizedBox(height: 8),
-                          _buildInfoRow(
-                              Icons.person_outline, 'Gender', profile.gender),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        border:
-                            Border(top: BorderSide(color: Colors.grey[200]!)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              Get.toNamed('/postsPage');
-                            },
-                            child: Icon(Icons.grid_on, color: Colors.orange),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  // Recipe grid section
+                  _buildRecipeGrid(),
+                ],
               );
             },
           );
